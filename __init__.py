@@ -241,8 +241,7 @@ async def _fetch_avatars(rows: List[Dict[str, Any]]) -> None:
 
 def _save_dir(chat_key: str) -> Path:
     data_dir = Path(os.environ.get("NEKRO_DATA_DIR", "/app/uploads"))
-    safe_chat_key = re.sub(r"[^a-zA-Z0-9_.-]", "_", chat_key) or "unknown"
-    out = data_dir / "uploads" / safe_chat_key / "msg_rank"
+    out = data_dir / "uploads" / "msg_rank"
     out.mkdir(parents=True, exist_ok=True)
     return out
 
