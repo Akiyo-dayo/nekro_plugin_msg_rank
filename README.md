@@ -18,13 +18,13 @@ NekroAgent 插件：统计群成员发言条数，渲染为「每日发言榜」
 ## 安装
 
 1. 将本目录放入 NekroAgent 的 `plugins/packages/nekro_plugin_msg_rank/`
-2. 放置中文字体到插件 `fonts/` 目录（仓库未内置大体积字体文件）：
-   - 需要 `NotoSansCJK-Regular.ttc` 与 `NotoSansCJK-Bold.ttc`
-   - 可从 [Google Noto CJK](https://github.com/notofonts/noto-cjk/releases) 下载，或直接从 NekroAgent 容器内复制：`/usr/share/fonts/opentype/noto/`
-3. 重启 NekroAgent 容器（`docker restart nekro_agent`）
-4. 日志出现 `插件加载成功: "群发言排行榜"` 即安装成功
+2. 重启 NekroAgent 容器（`docker restart nekro_agent`）
+3. 日志出现 `插件加载成功: "群发言排行榜"` 即安装成功
 
-依赖说明：插件运行需要 `Pillow` 与 `httpx`。缺失时插件会在首次调用时尝试通过 NekroAgent 的动态包机制自动安装；建议提前在容器虚拟环境内安装好（注意装进 `/app/.venv`，不是系统 Python）。
+依赖说明：
+
+- 中文字体（NotoSansCJK Regular/Bold）已内置在 `fonts/` 目录，开箱即用
+- 插件运行需要 `Pillow` 与 `httpx`。缺失时插件会在首次调用时尝试通过 NekroAgent 的动态包机制自动安装；建议提前在容器虚拟环境内安装好（注意装进 `/app/.venv`，不是系统 Python）
 
 ## 使用
 
