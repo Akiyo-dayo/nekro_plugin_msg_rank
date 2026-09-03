@@ -251,7 +251,7 @@ def _save_dir(chat_key: str) -> Path:
 
 
 def _sandbox_image_path(chat_key: str, out_path: Path) -> str:
-    return f"/app/uploads/{_chat_upload_dir(chat_key)}/msg_rank/{out_path.name}"
+    return f"/app/uploads/msg_rank/{out_path.name}"
 
 
 def _safe_name(chat_key: str) -> str:
