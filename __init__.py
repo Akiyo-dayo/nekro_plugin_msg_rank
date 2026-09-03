@@ -239,15 +239,19 @@ async def _fetch_avatars(rows: List[Dict[str, Any]]) -> None:
     await asyncio.gather(*(one(r) for r in need))
 
 
+def _chat_upload_dir(chat_key: str) -> str:
+    return re.sub(r"[^a-zA-Z0-9_.-]", "_", chat_key) or "unknown"
+
+
 def _save_dir(chat_key: str) -> Path:
     data_dir = Path(os.environ.get("NEKRO_DATA_DIR", "/app/uploads"))
-    out = data_dir / "uploads" / "msg_rank"
+    out = data_dir / "uploads" / _chat_upload_dir(chat_key) / "msg_rank"
     out.mkdir(parents=True, exist_ok=True)
     return out
 
 
 def _sandbox_image_path(chat_key: str, out_path: Path) -> str:
-    return f"/app/uploads/msg_rank/{out_path.name}"
+    return f"/app/uploads/{_chat_upload_dir(chat_key)}/msg_rank/{out_path.name}"
 
 
 def _safe_name(chat_key: str) -> str:
