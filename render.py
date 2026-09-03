@@ -409,7 +409,7 @@ def render_rank_card(
     fy = H - 10 - footer_h // 2
     draw.line([cx0 + PAD, fy - 24, cx0 + cw - PAD, fy - 24], fill=(234, 238, 244), width=2)
     draw.text((cx0 + PAD, fy), f"统计区间 {range_text}", font=_font(21), fill=FAINT_COLOR, anchor="lm")
-    draw.text((cx0 + cw - PAD, fy), "Data by NekroAgent", font=_font(21), fill=FAINT_COLOR, anchor="rm")
+    draw.text((cx0 + cw - PAD, fy), "群发言排行榜 · By Akiyo-dayo", font=_font(21), fill=FAINT_COLOR, anchor="rm")
 
     if out_path:
         canvas.save(out_path, "PNG")
