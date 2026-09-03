@@ -145,15 +145,30 @@ def _resolve_chat_key(_ctx: AgentCtx, chat_key: str) -> str:
 
 
 _RANK_SQL_BASE = """
-SELECT m.sender_id AS sender_id, MAX(m.sender_nickname) AS nick, COUNT(*) AS cnt,
-       COUNT(*) FILTER (WHERE m.raw_cq_code LIKE '%CQ:image%') AS img_n,
-       COUNT(*) FILTER (WHERE m.raw_cq_code NOT LIKE '%CQ:image%'
-                         AND (m.raw_cq_code LIKE '%CQ:forward%' OR m.raw_cq_code LIKE '%CQ:video%'
-                              OR m.raw_cq_code LIKE '%CQ:record%' OR m.raw_cq_code LIKE '%CQ:file%')) AS other_n
-FROM chat_message m
-WHERE m.chat_key = $1 AND m.is_recalled = FALSE{excl}{ts}
-GROUP BY m.sender_id
-ORDER BY cnt DESC, m.sender_id
+SELECT t.sender_id AS sender_id, MAX(t.nick) AS nick, COUNT(*) AS cnt,
+       COUNT(*) FILTER (WHERE t.cls = 'video') AS video_n,
+       COUNT(*) FILTER (WHERE t.cls = 'voice') AS voice_n,
+       COUNT(*) FILTER (WHERE t.cls = 'forward') AS forward_n,
+       COUNT(*) FILTER (WHERE t.cls = 'image') AS image_n,
+       COUNT(*) FILTER (WHERE t.cls = 'other') AS other_n
+FROM (
+    SELECT m.sender_id, m.sender_nickname AS nick,
+        CASE
+            WHEN m.content_data LIKE '%"type": "video"%' THEN 'video'
+            WHEN m.content_data LIKE '%"type": "record"%' THEN 'voice'
+            WHEN m.content_data LIKE '%"type": "forward"%' THEN 'forward'
+            WHEN m.content_data LIKE '%"type": "image"%' THEN 'image'
+            WHEN m.content_data LIKE '%"type": "file"%' THEN 'other'
+            WHEN m.content_data LIKE '%"type": "json_card"%' THEN 'other'
+            WHEN m.content_data LIKE '%"type": "poke"%' THEN 'other'
+            WHEN m.content_text LIKE '[Image:%' THEN 'image'
+            ELSE 'text'
+        END AS cls
+    FROM chat_message m
+    WHERE m.chat_key = $1 AND m.is_recalled = FALSE{excl}{ts}
+) t
+GROUP BY t.sender_id
+ORDER BY cnt DESC, t.sender_id
 LIMIT {lim}
 """
 _TOTAL_SQL_BASE = """
@@ -289,17 +304,22 @@ async def build_rank_image(chat_key: str, scope: str, top_n: int) -> Tuple[Path,
             banner_img = None
 
     out_path = _save_dir() / f"rank_{_safe_name(chat_key)}_{int(time.time())}.png"
-    rows_meta = [
-        (
-            r.get("nick") or "未知",
-            int(r.get("cnt") or 0),
-            int(r.get("cnt") or 0) - int(r.get("img_n") or 0) - int(r.get("other_n") or 0),
-            int(r.get("img_n") or 0),
-            int(r.get("other_n") or 0),
-            r.get("avatar_bytes"),
+    rows_meta = []
+    for r in rows:
+        cnt = int(r.get("cnt") or 0)
+        video_n = int(r.get("video_n") or 0)
+        voice_n = int(r.get("voice_n") or 0)
+        forward_n = int(r.get("forward_n") or 0)
+        image_n = int(r.get("image_n") or 0)
+        other_n = int(r.get("other_n") or 0)
+        text_n = max(0, cnt - video_n - voice_n - forward_n - image_n - other_n)
+        rows_meta.append(
+            (
+                r.get("nick") or "未知", cnt, text_n, image_n,
+                video_n, voice_n, forward_n, other_n,
+                r.get("avatar_bytes"),
+            )
         )
-        for r in rows
-    ]
     render.render_from_render_rows(
         rows_meta,
         total_users=total_users,
