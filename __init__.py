@@ -239,11 +239,16 @@ async def _fetch_avatars(rows: List[Dict[str, Any]]) -> None:
     await asyncio.gather(*(one(r) for r in need))
 
 
-def _save_dir() -> Path:
+def _save_dir(chat_key: str) -> Path:
     data_dir = Path(os.environ.get("NEKRO_DATA_DIR", "/app/uploads"))
-    out = data_dir / "uploads" / "msg_rank"
+    safe_chat_key = re.sub(r"[^a-zA-Z0-9_.-]", "_", chat_key) or "unknown"
+    out = data_dir / "uploads" / safe_chat_key / "msg_rank"
     out.mkdir(parents=True, exist_ok=True)
     return out
+
+
+def _sandbox_image_path(chat_key: str, out_path: Path) -> str:
+    return f"/app/uploads/msg_rank/{out_path.name}"
 
 
 def _safe_name(chat_key: str) -> str:
@@ -303,7 +308,7 @@ async def build_rank_image(chat_key: str, scope: str, top_n: int) -> Tuple[Path,
         except Exception:
             banner_img = None
 
-    out_path = _save_dir() / f"rank_{_safe_name(chat_key)}_{int(time.time())}.png"
+    out_path = _save_dir(chat_key) / f"rank_{_safe_name(chat_key)}_{int(time.time())}.png"
     rows_meta = []
     for r in rows:
         cnt = int(r.get("cnt") or 0)
@@ -378,7 +383,7 @@ async def send_group_message_rank_image(
     ck = _resolve_chat_key(_ctx, chat_key)
     key = _resolve_scope(scope)
     out_path, rows, total_users, total_msgs = await build_rank_image(ck, key, _resolve_top_n(0))
-    await send_image(ck, str(out_path), _ctx)
+    await send_image(ck, _sandbox_image_path(ck, out_path), _ctx)
     return f"已生成并发送排行榜图片（{_SCOPE_LABELS[key][1]}）。{_summary(rows, total_users, total_msgs, key)}"
 
 
