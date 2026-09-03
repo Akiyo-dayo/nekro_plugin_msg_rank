@@ -38,7 +38,7 @@ plugin = NekroPlugin(
     module_name="nekro_plugin_msg_rank",
     description="统计群成员发言条数生成排行榜图片：/发言榜 指令默认查今日，Agent 可查本周/本月",
     version="1.1.0",
-    author="Akiyo-dayo",
+    author="Akiyo_dayo",
     url="https://github.com/Akiyo-dayo/nekro_plugin_msg_rank",
     support_adapter=["onebot_v11"],
 )
